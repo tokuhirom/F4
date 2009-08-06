@@ -16,70 +16,33 @@ sub create {
             return res(status => 200, body => 'ok');
         }
     } else {
-        my $bucket = model('Bucket')->create(F4::Util::bucket_name($req));
+        my $bucket = model('Bucket')->create(
+            F4::Util::bucket_name($req),
+            $user->access_key_id,
+        );
         return res(status => 200, body => 'ok');
     }
 }
 
-sub add_key {
+sub delete {
     my ($class, $req, $user) = @_;
     assert $user;
 
     my $bucket = model('Bucket')->get(F4::Util::bucket_name($req));
-    unless ($bucket) {
-        return res(status => 400, body => 'unknown bucket');
-    }
-
-    model('Bucket')->add_key(
-        $bucket,
-        $req->uri->path,
-        $req->headers->content_type,
-        $req->raw_body,
-    );
-    return res(status => 200, body => 'ok');
-}
-
-sub get_key {
-    my ($class, $req, $user) = @_;
-    assert $user;
-
-    my $bucket = model('Bucket')->get(F4::Util::bucket_name($req));
-    unless ($bucket) {
-        return res(status => 400, body => 'unknown bucket');
-    }
-
-    my $key = model('Bucket')->get_key(
-        $bucket,
-        $req->uri->path,
-    );
-    if ($key) {
-        return res(
-            status  => 200,
-            body    => $key->content,
-            headers => { content_type => $key->content_type, }
-        );
+    if ($bucket) {
+        assert $bucket->owner_access_key_id;
+        if ($bucket->owner_access_key_id ne $user->access_key_id) {
+            # TODO: support acl..
+            dbg "do not remove another user's bucket!";
+            return res(status => 403, body => 'Forbidden');
+        } else {
+            dbg "removing bucket";
+            $bucket->delete();
+            return res(status => 200, body => 'removed');
+        }
     } else {
-        return res(status => 404, body => 'unknown key');
+        return res(status => 404, body => 'not found');
     }
-}
-
-sub delete_key {
-    my ($class, $req, $user) = @_;
-    assert $user;
-
-    my $bucket = model('Bucket')->get(F4::Util::bucket_name($req));
-    unless ($bucket) {
-        return res(status => 400, body => 'unknown bucket');
-    }
-
-    my $key = model('Bucket')->delete_key(
-        $bucket,
-        $req->uri->path,
-    );
-    return res(
-        status  => 200,
-        body    => 'ok',
-    );
 }
 
 1;

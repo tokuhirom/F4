@@ -61,14 +61,17 @@ sub handler {
 
     if ($req->uri->path eq '/' && $req->method eq 'PUT') {
         return controller('Bucket')->create($req, $user);
+    } elsif ($req->uri->path eq '/' && $req->method eq 'DELETE') {
+        return controller('Bucket')->delete($req, $user);
     } elsif ($req->method eq 'PUT') {
-        return controller('Bucket')->add_key($req, $user);
+        return controller('Key')->add($req, $user);
     } elsif ($req->method eq 'GET') {
-        return controller('Bucket')->get_key($req, $user);
+        return controller('Key')->get($req, $user);
     } elsif ($req->method eq 'DELETE') {
-        return controller('Bucket')->delete_key($req, $user);
+        return controller('Key')->delete($req, $user);
     } else {
         p($req);
+        dbg("404 not found");
         return HTTP::Engine::Response->new( body => '404 not found',
             status => 40 );
     }
@@ -96,7 +99,6 @@ sub authorize {
             dbg("invalid key_id");
             return;
         }
-        p($account);
 
         # XXX should not call the private method! I KNOW!
         use Amazon::S3;
@@ -110,7 +112,7 @@ sub authorize {
             return;
         }
     } else {
-        warn "Bad authentication header: $auth";
+        dbg("Bad authentication header: $auth");
         return;
     }
 }

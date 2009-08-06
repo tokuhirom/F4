@@ -7,7 +7,7 @@ plan skip_all => 'this test requires $ENV{TEST_F4_AWS_HOST}' unless $ENV{TEST_F4
 use Test::Requires qw/
     Amazon::S3
 /;
-plan tests => 5;
+plan tests => 6;
 use File::Temp;
 use F4::Registrar;
 
@@ -40,6 +40,7 @@ test_tcp(
         is $res->{content_length}, 3;
         ok $bucket->delete_key('test.txt');
         diag $s3->err if $s3->err;
+        ok $bucket->delete_bucket;
     },
     server => sub {
         my $port = shift;

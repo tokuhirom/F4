@@ -20,7 +20,6 @@ sub setup_schema {
     for my $target ( $self->schema_names ) {
         for my $sql ( $self->as_sqls($target) ) {
             $self->get_driver($target)->r_handle->do($sql);
-            warn $sql;
         }
     }
 }
