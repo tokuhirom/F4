@@ -27,6 +27,7 @@ test_tcp(
             aws_secret_access_key => $account->secret_access_key,
             host                  => "$ENV{TEST_F4_AWS_HOST}:$port",
         });
+        note "add bucket";
         my $bucket = $s3->add_bucket({ bucket => 'foo' });
         ok $bucket, $s3->err || 'ok';
         $bucket->add_key(
